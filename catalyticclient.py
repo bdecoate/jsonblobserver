@@ -12,9 +12,10 @@ class CatalyticClient(JSONBlobSocket):
 	def __init__(self, host='127.0.0.1', port=9500):
 		super(CatalyticClient, self).__init__(host, port, logger=client_logger)
 		self.conn = self.sock
+		self.logger = client_logger
 
 	def connect_to_server(self):
 		try:
 			self.sock.connect((self.host, self.port))
-		except socket.error:
-			print "could not connect"
+		except socket.error as msg:
+			self.error("Couldn't connect to server: %s" % msg)

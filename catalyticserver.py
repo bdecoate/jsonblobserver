@@ -1,9 +1,12 @@
 import json
-import contextlib
 import logging
-from jsonsocket import JSONBlobSocket
+import threading
 
-logging.basicConfig(filename='server.log', level=logging.DEBUG,
+from jsonsocket import JSONBlobSocket
+from serverutils import process_request
+
+
+logging.basicConfig(filename='server.log', level=logging.ERROR,
 	format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 server_logger = logging.getLogger('serverlog')
 
@@ -18,29 +21,30 @@ class CatalyticServer(JSONBlobSocket):
 		try:
 			while self.listening:
 				self.sock.listen(1)
-				self.conn, addr = self.sock.accept()
-				data = self.receive()
-				json_data = json.loads(data)
-				self.send(json_data)
-				self.conn.close()
+				conn, addr = self.sock.accept()
+				self._threaded_connection(conn)
 		except KeyboardInterrupt:
 			self.listening = False
+
+	def _threaded_connection(self, conn):
+		connection = ConnectionThread(conn, self.logger)
+		connection.start()
 
 	def shutdown(self):
 		if self.sock:
 			self.sock.close()
 
 
-@contextlib.contextmanager
-def launch_catalytic_server(host=None, port=None):
-	if not host or not port:
-		raise ValueError('Server requires host and port')
+class ConnectionThread(JSONBlobSocket, threading.Thread):
+	def __init__(self, sock, logger):
+		threading.Thread.__init__(self)
+		self.sock = sock
+		self.conn = sock
+		self.logger = logger
 
-	myserver = CatalyticServer(host, port)
-	myserver.accept_connection()
-
-	try:
-		yield myserver
-	finally:
-		myserver.shutdown()
-	return
+	def run(self):
+		data = self.receive()
+		json_data = json.loads(data)
+		result = process_request(json_data)
+		self.send(result)
+		self.close()
