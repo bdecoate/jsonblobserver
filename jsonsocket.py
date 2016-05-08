@@ -19,6 +19,12 @@ class JSONBlobSocket(object):
 			self.logger.error(message)
 
 	def send(self, json_data):
+		"""Send JSON Blob
+
+		The format of the message passed is:
+			length of json_data
+			json_data
+		"""
 		if not self.conn:
 			return
 
@@ -27,9 +33,11 @@ class JSONBlobSocket(object):
 		header = struct.pack('I', len(json_str))
 		self._send(header)
 		self._send(data)
+
 		self.debug('Sent %d bytes: %s' % (len(json_str), json_str))
 
 	def _send(self, data):
+		"""Loop socket send until all data has been successfully sent"""
 		sent_data = 0
 		while sent_data < len(data):
 			try:
@@ -39,16 +47,23 @@ class JSONBlobSocket(object):
 				return
 
 	def receive(self):
+		"""Read JSON Blob from socket
+
+		First read header info to determine len(json_data).
+		Then receive from socket until entire json_data has been read.
+		"""
 		try:
 			header_data = self._read_header()
 			json_data = self._receive(header_data)
 		except socket.error as msg:
 			self.error('Error receiving: %s' % msg)
 			return {'error': msg}
+
 		self.debug('Received %d bytes: %s' % (header_data, json_data))
 		return json_data
 
 	def _receive(self, json_len):
+		"""recv from socket until json_len bytes are read"""
 		recv_data = ''
 		while len(recv_data) < json_len:
 			buffer_data = self.conn.recv(json_len - len(recv_data))
@@ -56,6 +71,7 @@ class JSONBlobSocket(object):
 		return recv_data
 
 	def _read_header(self):
+		"""Read first four bytes of JSON Blob to grab the length of the message"""
 		header_data = self._receive(4)
 		return struct.unpack('I', header_data)[0]
 

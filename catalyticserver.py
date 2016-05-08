@@ -1,6 +1,7 @@
 import json
 import logging
 import threading
+import socket
 
 from jsonsocket import JSONBlobSocket
 from serverutils import process_request
@@ -14,10 +15,17 @@ server_logger = logging.getLogger('serverlog')
 class CatalyticServer(JSONBlobSocket):
 	def __init__(self, host='127.0.0.1', port=9500):
 		super(CatalyticServer, self).__init__(host, port, logger=server_logger)
-		self.sock.bind((self.host, self.port))
+		try:
+			self.sock.bind((self.host, self.port))
+		except socket.error as msg:
+			self.error('Cannot bind socket: %s' % msg)
 		self.listening = True
 
 	def accept_connection(self):
+		"""Loop forever accepting data on the socket
+
+		Spawn a Thread to handle each incoming connection.
+		"""
 		try:
 			while self.listening:
 				self.sock.listen(1)
@@ -43,6 +51,12 @@ class ConnectionThread(JSONBlobSocket, threading.Thread):
 		self.logger = logger
 
 	def run(self):
+		"""Read data accepted from the connection.
+
+		Parse the JSON Blob and execute the desired command.
+		Send the result of the command.
+		Close the connection when completed.
+		"""
 		data = self.receive()
 		json_data = json.loads(data)
 		result = process_request(json_data)
