@@ -17,9 +17,10 @@ class CatalyticServer(JSONBlobSocket):
 		super(CatalyticServer, self).__init__(host, port, logger=server_logger)
 		try:
 			self.sock.bind((self.host, self.port))
+			self.listening = True
 		except socket.error as msg:
 			self.error('Cannot bind socket: %s' % msg)
-		self.listening = True
+			self.listening = False
 
 	def accept_connection(self):
 		"""Loop forever accepting data on the socket
