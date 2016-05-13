@@ -8,7 +8,7 @@ port = 9500
 #  client 1 -- send the factor command
 client = CatalyticClient(host, port)
 client.connect_to_server()
-json = {'factor': 75}
+json = {'factor': 75757575}
 client.send(json)
 response = client.receive()
 client.close()
@@ -26,7 +26,15 @@ client.close()
 #  client 3 -- send the fibonacci command
 client = CatalyticClient(host, port)
 client.connect_to_server()
-json = {'fibonacci': 12}
+json = {'fibonacci': 121212}
+client.send(json)
+response = client.receive()
+client.close()
+
+#  client 4 -- send the factor command
+client = CatalyticClient(host, port)
+client.connect_to_server()
+json = {'factor': 757575}
 client.send(json)
 response = client.receive()
 client.close()

@@ -26,18 +26,19 @@ def palindrome(message):
 			return False
 	return True
 
-
-def min_factor(num):
+cdef long min_factor(long num):
+	cdef long i = 0
 	for i in range(2, num + 1):
 		if num % i == 0:
 			return i
 	return num
 
 
-def factor(number):
+def factor(long number):
 	result = []
-	total = 1
-	cur_num = number
+	cdef long total = 1
+	cdef long cur_num = number
+	cdef long min_number
 	while total != number:
 		min_num = min_factor(cur_num)
 		result.append(min_num)
@@ -46,10 +47,13 @@ def factor(number):
 	return result
 
 
-def fib(n):
-	n1, n2, total = 0, 0, 0
+def fib(int n):
+	cdef int n1 = 0
+	cdef int n2 = 0
+	cdef int total = 0
 	for i in range(1, n + 1):
 		n2 = i
 		total = total + n1 + n2
 		n1 = i
 	return total
+
