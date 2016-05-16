@@ -47,6 +47,19 @@ user    0m2.307s
 sys 0m0.562s
 ```
 
+Check server status:
+```
+06:16 PM bdecoate:~/catalytic$ ./server_driver.py start &
+[1] 16292
+06:16 PM bdecoate:~/catalytic$ ./server_driver.py status
+Server running: process 16292 on port 9500
+06:16 PM bdecoate:~/catalytic$ ./server_driver.py shutdown
+06:16 PM bdecoate:~/catalytic$ 
+[1]+  Done                    ./server_driver.py start
+06:16 PM bdecoate:~/catalytic$ ./server_driver.py status
+Server not running
+```
+
 # Compiling with Cython
 A Cython version of the `serverutils.py` file has been included in `serverutils.pyx`.
 With Cython installed, use `setup.py build_ext --inplace` to compile the server
