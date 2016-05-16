@@ -21,7 +21,7 @@ def launch_catalytic_server(host=None, port=None, lockfilename=None):
 		logging.debug('Starting server...')
 		myserver = CatalyticServer(host, port)
 		signal.signal(signal.SIGTERM, sig_exit)
-		lock_file(lockfilename)
+		lock_file(lockfilename, port)
 		yield myserver
 	finally:
 		logging.debug('Shutting down server...')
@@ -32,27 +32,36 @@ def launch_catalytic_server(host=None, port=None, lockfilename=None):
 def read_lock_file(lockfilename):
 	"""Read and return the running server process pid"""
 	lockfile = open(lockfilename, 'r+')
-	server_pid = int(lockfile.read().strip())
+	server_pid, server_port = lockfile.read().split()
 	lockfile.close()
-	return server_pid
+	return (server_pid, server_port)
 
 
-def check_running(lockfilename):
+def check_running(lockfilename, print_info=False):
 	"""Read from the server lockfile to see if the server is already running"""
 	try:
-		server_pid = read_lock_file(lockfilename)
+		server_pid, server_port = read_lock_file(lockfilename)
+		status = 'Server running: '
+		info = 'process {} on port {}'.format(server_pid, server_port)
 	except IOError:
 		server_pid = None
+		status = 'Server not running'
+		info = ''
+
+	msg = '{}{}'.format(status, info)
+
+	if print_info:
+		print msg
+		logging.debug(msg)
 
 	if server_pid:
-		logging.error('Server already running')
 		sys.exit()
 
 
 def shutdown_catalytic_server(lockfilename):
 	"""Kill the running server process and exit gracefully to allow removing the lockfile"""
 	try:
-		server_pid = read_lock_file(lockfilename)
+		server_pid, server_port = read_lock_file(lockfilename)
 	except IOError:
 		server_pid = None
 
@@ -60,7 +69,7 @@ def shutdown_catalytic_server(lockfilename):
 		logging.error("Cannot shutdown server. It's not running!")
 		sys.exit()
 
-	os.kill(server_pid, signal.SIGTERM)
+	os.kill(int(server_pid), signal.SIGTERM)
 	sys.exit()
 
 
@@ -68,11 +77,11 @@ def sig_exit(sig, stack):
 	sys.exit()
 
 
-def lock_file(lockfilename):
+def lock_file(lockfilename, port):
 	"""Create a file with the running server process pid."""
 	server_pid = os.getpid()
 	lockfile = open(lockfilename, 'w+')
-	lockfile.write('{}\n'.format(str(server_pid)))
+	lockfile.write('{}\n{}\n'.format(str(server_pid), str(port)))
 
 
 def free_lock_file(lockfilename=None):
@@ -82,7 +91,7 @@ def free_lock_file(lockfilename=None):
 
 if __name__ == '__main__':
 	if len(sys.argv) != 2:
-		print 'usage: server_driver [start|shutdown]'
+		print 'usage: server_driver {start|shutdown|status}'
 		sys.exit()
 
 	lockfilename = '/tmp/catalyticserver.pid'
@@ -95,3 +104,5 @@ if __name__ == '__main__':
 			myserver.accept_connection()
 	elif command == 'shutdown':
 		shutdown_catalytic_server(lockfilename)
+	elif command == 'status':
+		check_running(lockfilename, print_info=True)

@@ -7,7 +7,7 @@ from jsonsocket import JSONBlobSocket
 from serverutils import process_request
 
 
-logging.basicConfig(filename='server.log', level=logging.ERROR,
+logging.basicConfig(filename='server.log', level=logging.DEBUG,
 	format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 server_logger = logging.getLogger('serverlog')
 
